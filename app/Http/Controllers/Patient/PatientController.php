@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Patient;
 
+use App\Http\Requests\PatientRequest;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Patient\Patient;
 use Illuminate\Support\Facades\DB;
@@ -20,19 +22,13 @@ class PatientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(): JsonResponse
     {
-        $this->authorize('viewAny',Patient::class);
-        $search = $request->search;
+        $this->authorize('viewAny', Patient::class);
 
-        $patients = Patient::where(DB::raw("CONCAT(patients.name,' ',IFNULL(patients.surname,''),' ',patients.email)"),"like","%".$search."%")
-                        ->orderBy("id","desc")
-                        ->paginate(20);
+        $patients = Patient::orderBy('id', 'desc')->paginate(20);
 
-        return response()->json([
-            "total" => $patients->total(),
-            "patients" => PatientCollection::make($patients),
-        ]);
+        return response()->json($patients);
     }
 
     public function profile($id) {
@@ -96,51 +92,26 @@ class PatientController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(PatientRequest  $request)
     {
-        $this->authorize('create',Patient::class);
-        $patient_is_valid = Patient::where("n_document",$request->n_document)->first();
-
-        if($patient_is_valid){
-            return response()->json([
-                "message" => 403,
-                "message_text" => "EL PACIENTE YA EXISTE"
-            ]);
-        }
-
-        if($request->hasFile("imagen")){
-            $path = Storage::putFile("patients",$request->file("imagen"));
-            $request->request->add(["avatar" => $path]);
-        }
-
-        // "Fri Oct 08 1993 00:00:00 GMT-0500 (hora estándar de Perú)"
-        // Eliminar la parte de la zona horaria (GMT-0500 y entre paréntesis)
-        if($request->birth_date){
-            $date_clean = preg_replace('/\(.*\)|[A-Z]{3}-\d{4}/', '', $request->birth_date);
-    
-            $request->request->add(["birth_date" => Carbon::parse($date_clean)->format("Y-m-d h:i:s")]);
-        }
-
-        $patient = Patient::create($request->all());
-
-        $request->request->add(["patient_id" => $patient->id]);
-        PatientPerson::create($request->all());
+        $patient = Patient::create($request->validated());
 
         return response()->json([
-            "message" => 200
-        ]);
+            'message' => 'Patient created successfully',
+            'data' => $patient
+        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $this->authorize('view',Patient::class);
         $patient = Patient::findOrFail($id);
 
         return response()->json([
-            "patient" => PatientResource::make($patient), 
+            "patient" =>$patient,
         ]);
     }
 
@@ -171,7 +142,7 @@ class PatientController extends Controller
 
         if($request->birth_date){
             $date_clean = preg_replace('/\(.*\)|[A-Z]{3}-\d{4}/', '', $request->birth_date);
-    
+
             $request->request->add(["birth_date" => Carbon::parse($date_clean)->format("Y-m-d h:i:s")]);
         }
 
@@ -193,18 +164,14 @@ class PatientController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
+
         $this->authorize('delete',Patient::class);
+
         $patient = Patient::findOrFail($id);
-        if($patient->avatar){
-            Storage::delete($patient->avatar);
-        }
-        $cachedRecord = Redis::get('profile_patient_#'.$id);
-        if(isset($cachedRecord)) {
-            Redis::del('profile_patient_#'.$id);
-        }
         $patient->delete();
+
         return response()->json([
             "message" => 200
         ]);
