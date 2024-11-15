@@ -118,47 +118,28 @@ class PatientController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(PatientRequest $request, string $id): JsonResponse
     {
-        $this->authorize('update',Patient::class);
-        $patient_is_valid = Patient::where("id","<>",$id)->where("n_document",$request->n_document)->first();
-
-        if($patient_is_valid){
-            return response()->json([
-                "message" => 403,
-                "message_text" => "EL PACIENTE YA EXISTE"
-            ]);
-        }
+        $this->authorize('update', Patient::class);
 
         $patient = Patient::findOrFail($id);
 
-        if($request->hasFile("imagen")){
-            if($patient->avatar){
-                Storage::delete($patient->avatar);
-            }
-            $path = Storage::putFile("patients",$request->file("imagen"));
-            $request->request->add(["avatar" => $path]);
+        $existingPatient = Patient::where('id', '<>', $id)
+            ->where('identification_number', $request->identification_number)
+            ->first();
+
+        if ($existingPatient) {
+            return response()->json([
+                'message' => 'Patient with the same identification number already exists.',
+            ], 409);
         }
 
-        if($request->birth_date){
-            $date_clean = preg_replace('/\(.*\)|[A-Z]{3}-\d{4}/', '', $request->birth_date);
+        $patient->update($request->validated());
 
-            $request->request->add(["birth_date" => Carbon::parse($date_clean)->format("Y-m-d h:i:s")]);
-        }
-
-        $cachedRecord = Redis::get('profile_patient_#'.$id);
-        if(isset($cachedRecord)) {
-            Redis::del('profile_patient_#'.$id);
-        }
-        // $request->request->add(["birth_date" => Carbon::parse($request->birth_date, 'GMT')->format("Y-m-d h:i:s")]);
-        $patient->update($request->all());
-
-        if($patient->person){
-            $patient->person->update($request->all());
-        }
         return response()->json([
-            "message" => 200
-        ]);
+            'message' => 'Patient updated successfully',
+            'data' => $patient,
+        ], 200);
     }
 
     /**

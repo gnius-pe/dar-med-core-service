@@ -22,12 +22,14 @@ class PatientRequest extends FormRequest
      */
     public function rules(): array
     {
+        $id = $this->route('id');
+
         return [
             'identification_type' => 'required|in:DNI,PPT',
-            'identification_number' => 'required|string|unique:patients,identification_number',
+            'identification_number' => "required|string|unique:patients,identification_number,{$id}",
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:patients,email',
+            'email' => "nullable|email|unique:patients,email,{$id}",
             'birth_date' => 'required|date',
             'first_phone' => 'required|string|max:20',
             'second_phone' => 'nullable|string|max:20',
