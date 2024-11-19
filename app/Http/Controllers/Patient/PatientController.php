@@ -5,16 +5,11 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Requests\PatientRequest;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Models\Patient\Patient;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\Patient\PatientPerson;
 use Illuminate\Support\Facades\Redis;
 use App\Models\Appointment\Appointment;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\Patient\PatientResource;
-use App\Http\Resources\Patient\PatientCollection;
 use App\Http\Resources\Appointment\AppointmentCollection;
 
 class PatientController extends Controller
