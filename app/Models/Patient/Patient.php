@@ -12,28 +12,22 @@ class Patient extends Model
     use HasFactory;
     use SoftDeletes;
     protected $fillable = [
-        "name",
-        "surname",
-        "mobile",
-        "email",
-        "avatar",
-        "birth_date",
-        "gender",
-        "education",
-        "address",
-        "antecedent_family",
-        "antecedent_personal",
-        "antecedent_allergic",
-        "current_disease",
-        "ta",
-        "temperatura",
-        "fc",
-        "fr",
-        "peso",
-        "n_document",
-        // "created_at"
+        'identification_type',
+        'identification_number',
+        'first_name',
+        'last_name',
+        'email',
+        'birth_date',
+        'first_phone',
+        'second_phone',
+        'gender',
+        'message',
+        'medical_examination',
+        'spiritual_support',
+        'permission_to_call',
+        'visit_condition',
+        'spiritual_diagnosis',
     ];
-
 
     public function setCreatedAtAttribute($value)
     {
@@ -47,7 +41,7 @@ class Patient extends Model
         $this->attributes["updated_at"]= Carbon::now();
     }
 
-    public function person() {
+/*    public function person() {
         return $this->hasOne(PatientPerson::class,"patient_id");
-    }
+    }*/
 }
