@@ -6,11 +6,10 @@ use App\Models\Patient\Patient;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Model>
+ * @extends Factory<Patient>
  */
 class PatientFactory extends Factory
 {
-    protected $model = Patient::class;
     /**
      * Define the model's default state.
      *
@@ -19,20 +18,21 @@ class PatientFactory extends Factory
     public function definition(): array
     {
         return [
-            "name" => $this->faker->name(),
-            "surname" => $this->faker->lastName(),
-            "mobile" => $this->faker->phoneNumber(),
-            "email" => $this->faker->email(),
-            "birth_date" => $this->faker->dateTimeBetween("1985-10-01 00:00:00", "2000-10-25 23:59:59"),
-            "gender" => $this->faker->randomElement([1, 2]),
-            "education" => $this->faker->word(),
-            "address" => $this->faker->word(),
-            "antecedent_family" => $this->faker->text($maxNbChars = 300),
-            "antecedent_personal" => $this->faker->text($maxNbChars = 200),
-            "antecedent_allergic" => $this->faker->text($maxNbChars = 150),
-            "current_disease" => $this->faker->text($maxNbChars = 100),
-            "n_document" => $this->faker->randomDigit(),
-            "created_at" => $this->faker->dateTimeBetween("2023-01-01 00:00:00", "2023-12-25 23:59:59"),
+            'identification_type' => $this->faker->randomElement(['DNI', 'PPT']),
+            'identification_number' => $this->faker->unique()->numerify('#########'),
+            'first_name' => $this->faker->firstName,
+            'last_name' => $this->faker->lastName,
+            'email' => $this->faker->unique()->safeEmail,
+            'birth_date' => $this->faker->date(),
+            'first_phone' => $this->faker->phoneNumber,
+            'second_phone' => $this->faker->optional()->phoneNumber,
+            'gender' => $this->faker->randomElement(['M', 'F', 'NONE']),
+            'message' => $this->faker->optional()->sentence,
+            'medical_examination' => $this->faker->boolean,
+            'spiritual_support' => $this->faker->boolean,
+            'permission_to_call' => $this->faker->boolean,
+            'visit_condition' => $this->faker->randomElement(['urgent', 'program', 'inactive']),
+            'spiritual_diagnosis' => $this->faker->optional()->sentence,
         ];
     }
 }
