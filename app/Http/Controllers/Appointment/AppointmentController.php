@@ -189,9 +189,9 @@ class AppointmentController extends Controller
     }
 
     public function query_patient(Request $request){
-        $n_document = $request->get("n_document");
+        $identification_number = $request->get("identification_number");
 
-        $patient = Patient::where("n_document",$n_document)->first();
+        $patient = Patient::where("identification_number",$identification_number)->first();
         if(!$patient){
             return response()->json([
                 "message" => 403,
@@ -199,10 +199,11 @@ class AppointmentController extends Controller
         }   
         return response()->json([
             "message" => 200,
-            "name" => $patient->name,
-            "surname" => $patient->surname,
-            "mobile" => $patient->mobile,
-            "n_document" => $patient->n_document,
+            "first_name" => $patient->first_name,
+            "last_name" => $patient->last_name,
+           // "mobile" => $patient->mobile,
+            "identification_number" => $patient->identification_number,
+
         ]);
     }
     /**
@@ -213,15 +214,15 @@ class AppointmentController extends Controller
         $this->authorize('create', Appointment::class);
     
         // Intentamos buscar al paciente por su documento
-        $patient = Patient::where("n_document", $request->n_document)->first();
+        $patient = Patient::where("identification_number", $request->identification_number)->first();
     
         if (!$patient) {
             // Si el paciente no existe, lo creamos y añadimos la relación de acompañante
             $patient = Patient::create([
-                "name" => $request->name,
-                "surname" => $request->surname,
-                "mobile" => $request->mobile,
-                "n_document" => $request->n_document,
+                "first_name" => $request->first_name,
+                "last_name" => $request->last_name,
+               // "mobile" => $request->mobile,
+                "identification_number" => $request->identification_number,
             ]);
     
             PatientPerson::create([

@@ -20,7 +20,7 @@ class PatientResource extends JsonResource
             "name" => $this->resource->name,
             "surname" => $this->resource->surname,
             "full_name" => $this->resource->name . ' ' .$this->resource->surname,
-            "n_document" => $this->resource->n_document,
+            "identification_number" => $this->resource->identification_number,
             "mobile" => $this->resource->mobile,
             "email" => $this->resource->email,
             "avatar" => $this->resource->avatar ? env("APP_URL")."storage/".$this->resource->avatar : NULL,
