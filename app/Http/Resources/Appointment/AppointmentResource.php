@@ -29,7 +29,7 @@ class AppointmentResource extends JsonResource
                     "surname" => $this->resource->patient->surname,
                     "full_name" => $this->resource->patient->name. ' '.$this->resource->patient->surname,
                     "mobile" => $this->resource->patient->mobile,
-                    "n_document" => $this->resource->patient->n_document,
+                    "identification_number" => $this->resource->patient->identification_number,
                     "name_companion" => $this->resource->patient->person->name_companion,
                     "surname_companion" => $this->resource->patient->person->surname_companion
                 ] : NULL,
