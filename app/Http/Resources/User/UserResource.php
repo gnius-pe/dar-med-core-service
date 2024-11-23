@@ -16,15 +16,19 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $HOUR_SCHEDULES = collect([]);
-        $days_week = [];
-        $days_week["Lunes"] = "table-primary";
-        $days_week["Martes"] = "table-secondary";
-        $days_week["Miercoles"] = "table-success";
-        $days_week["Jueves"] = "table-warning";
-        $days_week["Viernes"] = "table-info";
+        $days_week = [
+            "Lunes" => "table-primary",
+            "Martes" => "table-secondary",
+            "Miercoles" => "table-success",
+            "Jueves" => "table-warning",
+            "Viernes" => "table-info",
+            "Sabado" => "table-light",
+            "Domingo" => "custom-sunday",
+        ];
+
         $days_name = "";
         foreach ($this->resource->schedule_days as $key => $schedule_day) {
-            $days_name .= ($schedule_day->day."-");
+            $days_name .= ($schedule_day->day . "-");
             foreach ($schedule_day->schedules_hours as $schedules_hour) {
                 $HOUR_SCHEDULES->push([
                     "day" => [
@@ -34,7 +38,7 @@ class UserResource extends JsonResource
                     "day_name" => $schedule_day->day,
                     "hours_day" => [
                         "hour" => $schedules_hour->doctor_schedule_hour->hour,
-                        "format_hour" => Carbon::parse(date("Y-m-d").' '.$schedules_hour->doctor_schedule_hour->hour.":00:00")->format("h:i A"),
+                        "format_hour" => Carbon::parse(date("Y-m-d") . ' ' . $schedules_hour->doctor_schedule_hour->hour . ":00:00")->format("h:i A"),
                         "items" => [],
                     ],
                     "hour" => $schedules_hour->doctor_schedule_hour->hour,
@@ -43,13 +47,14 @@ class UserResource extends JsonResource
                         "id" => $schedules_hour->doctor_schedule_hour->id,
                         "hour_start" => $schedules_hour->doctor_schedule_hour->hour_start,
                         "hour_end" => $schedules_hour->doctor_schedule_hour->hour_end,
-                        "format_hour_start" => Carbon::parse(date("Y-m-d").' '.$schedules_hour->doctor_schedule_hour->hour_start)->format("h:i A"),
-                        "format_hour_end" => Carbon::parse(date("Y-m-d").' '.$schedules_hour->doctor_schedule_hour->hour_end)->format("h:i A"),
+                        "format_hour_start" => Carbon::parse(date("Y-m-d") . ' ' . $schedules_hour->doctor_schedule_hour->hour_start)->format("h:i A"),
+                        "format_hour_end" => Carbon::parse(date("Y-m-d") . ' ' . $schedules_hour->doctor_schedule_hour->hour_end)->format("h:i A"),
                         "hour" => $schedules_hour->doctor_schedule_hour->hour,
                     ],
                 ]);
             }
         }
+
         return [
             "id" => $this->resource->id,
             "name" => $this->resource->name,
@@ -68,10 +73,10 @@ class UserResource extends JsonResource
             "specialitie" => $this->resource->specialitie ? [
                 "id" => $this->resource->specialitie->id,
                 "name" => $this->resource->specialitie->name,
-            ]: NULL,
-            "avatar" => env("APP_URL")."storage/".$this->resource->avatar,
+            ] : NULL,
+            "avatar" => env("APP_URL") . "storage/" . $this->resource->avatar,
             "schedule_selecteds" => $HOUR_SCHEDULES,
-            "days_name" => $days_name,
+            "days_name" => rtrim($days_name, "-"),
         ];
     }
 }
