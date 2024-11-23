@@ -227,23 +227,23 @@ class AppointmentController extends Controller
     
             PatientPerson::create([
                 "patient_id" => $patient->id,
-                "name_companion" => $request->name_companion,
-                "surname_companion" => $request->surname_companion,
+                "name_companion" => $request->name_companion?? null,
+                "surname_companion" => $request->surname_companion?? null,
             ]);
         } else {
             // Si el paciente existe, verificamos si la relación `person` existe
             if ($patient->person) {
                 // Si la relación `person` existe, la actualizamos
                 $patient->person->update([
-                    "name_companion" => $request->name_companion,
-                    "surname_companion" => $request->surname_companion,
+                    "name_companion" => $request->name_companion?? null,
+                    "surname_companion" => $request->surname_companion?? null,
                 ]);
             } else {
                 // Si la relación `person` no existe, la creamos
                 PatientPerson::create([
                     "patient_id" => $patient->id,
-                    "name_companion" => $request->name_companion,
-                    "surname_companion" => $request->surname_companion,
+                    "name_companion" => $request->name_companion?? null,
+                    "surname_companion" => $request->surname_companion?? null,
                 ]);
             }
         }

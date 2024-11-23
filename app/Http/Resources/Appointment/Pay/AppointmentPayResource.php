@@ -30,8 +30,8 @@ class AppointmentPayResource extends JsonResource
                     "full_name" => $this->resource->patient->name. ' '.$this->resource->patient->surname,
                     "mobile" => $this->resource->patient->mobile,
                     "identification_number" => $this->resource->patient->identification_number,
-                    "name_companion" => $this->resource->patient->person->name_companion,
-                    "surname_companion" => $this->resource->patient->person->surname_companion
+                    "name_companion" => $this->resource->patient->person->name_companion?? null,
+                    "surname_companion" => $this->resource->patient->person->surname_companion?? null,
                 ] : NULL,
             "date_appointment" => $this->resource->date_appointment,
             "date_appointment_format" => Carbon::parse($this->resource->date_appointment)->format("Y-m-d"),
