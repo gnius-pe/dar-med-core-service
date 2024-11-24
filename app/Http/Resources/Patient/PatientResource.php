@@ -40,8 +40,8 @@ class PatientResource extends JsonResource
             "person" => $this->resource->person ? [
                 "id" => $this->resource->person->id,
                 "patient_id" => $this->resource->person->patient_id,
-                "name_companion" => $this->resource->person->name_companion,
-                "surname_companion" => $this->resource->person->surname_companion,
+                "name_companion" => $this->resource->person->name_companion?? null,
+                "clear" => $this->resource->person->surname_companion?? null,
                 "mobile_companion" => $this->resource->person->mobile_companion,
                 "relationship_companion" => $this->resource->person->relationship_companion,
                 "name_responsible" => $this->resource->person->name_responsible,

@@ -25,13 +25,16 @@ class AppointmentResource extends JsonResource
             "patient_id" => $this->resource->patient_id,
             "patient" =>  $this->resource->patient ? 
                 [
+                    
+                   // "mobile" => $request->mobile,
+                    "identification_number" => $request->identification_number,
                     "name" => $this->resource->patient->name,
                     "surname" => $this->resource->patient->surname,
-                    "full_name" => $this->resource->patient->name. ' '.$this->resource->patient->surname,
+                    "full_name" => $this->resource->patient->first_name. ' '.$this->resource->patient->last_name,
                     "mobile" => $this->resource->patient->mobile,
                     "identification_number" => $this->resource->patient->identification_number,
-                    "name_companion" => $this->resource->patient->person->name_companion,
-                    "surname_companion" => $this->resource->patient->person->surname_companion
+                    "name_companion" => $this->resource->patient->person->name_companion?? null,
+                    "surname_companion" => $this->resource->patient->person->surname_companion?? null,
                 ] : NULL,
             "date_appointment" => $this->resource->date_appointment,
             "date_appointment_format" => Carbon::parse($this->resource->date_appointment)->format("Y-m-d"),
