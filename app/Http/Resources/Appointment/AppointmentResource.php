@@ -26,12 +26,12 @@ class AppointmentResource extends JsonResource
             "patient" =>  $this->resource->patient ? 
                 [
                     
-                   // "mobile" => $request->mobile,
+                    "first_phone" => $request->first_phone,
                     "identification_number" => $request->identification_number,
-                    "name" => $this->resource->patient->name,
-                    "surname" => $this->resource->patient->surname,
+                    "first_name" => $this->resource->patient->first_name,
+                    "last_name" => $this->resource->patient->last_name,
                     "full_name" => $this->resource->patient->first_name. ' '.$this->resource->patient->last_name,
-                    "mobile" => $this->resource->patient->mobile,
+                    "first_phone" => $this->resource->patient->first_phone,
                     "identification_number" => $this->resource->patient->identification_number,
                     "name_companion" => $this->resource->patient->person->name_companion?? null,
                     "surname_companion" => $this->resource->patient->person->surname_companion?? null,
