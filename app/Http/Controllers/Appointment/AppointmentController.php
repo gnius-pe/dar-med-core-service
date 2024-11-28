@@ -201,7 +201,7 @@ class AppointmentController extends Controller
             "message" => 200,
             "first_name" => $patient->first_name,
             "last_name" => $patient->last_name,
-           // "mobile" => $patient->mobile,
+            "first_phone" => $patient->first_phone,
             "identification_number" => $patient->identification_number,
 
         ]);
@@ -221,7 +221,7 @@ class AppointmentController extends Controller
             $patient = Patient::create([
                 "first_name" => $request->first_name,
                 "last_name" => $request->last_name,
-               // "mobile" => $request->mobile,
+                "first_phone" => $request->first_phone,
                 "identification_number" => $request->identification_number,
             ]);
     
