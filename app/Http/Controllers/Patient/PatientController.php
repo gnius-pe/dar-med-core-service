@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Requests\PatientRequest;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Patient\Patient;
 use App\Http\Controllers\Controller;
@@ -18,11 +19,19 @@ class PatientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Patient::class);
 
-        $patients = Patient::orderBy('id', 'desc')->paginate(20);
+        $search = $request->query('search');
+        $patients = Patient::query()
+            ->when($search, function ($query, $search) {
+                $query->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('identification_number', 'like', "%{$search}%");
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(20);
 
         return response()->json($patients);
     }

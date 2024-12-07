@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GeographicLocationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -79,4 +80,8 @@ Route::group([
     Route::post("dashboard/doctor",[DashboardKpiController::class,"dashboard_doctor"]);
     Route::get("dashboard/config",[DashboardKpiController::class,"config"]);
     Route::post("dashboard/doctor-year",[DashboardKpiController::class,"dashboard_doctor_year"]);
+
+    Route::get('/geographic-locations/patient/{patientId}', [GeographicLocationController::class, 'getByPatientId']);
+    Route::post('/geographic-locations', [GeographicLocationController::class, 'store']);
+    Route::put('/geographic-locations/{geographicLocation}', [GeographicLocationController::class, 'update']);
 });
