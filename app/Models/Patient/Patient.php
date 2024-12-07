@@ -2,8 +2,10 @@
 
 namespace App\Models\Patient;
 
+use App\Models\GeographicLocation;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -39,6 +41,11 @@ class Patient extends Model
     {
     	date_default_timezone_set("America/Lima");
         $this->attributes["updated_at"]= Carbon::now();
+    }
+
+    public function geographicLocation(): HasOne
+    {
+        return $this->hasOne(GeographicLocation::class);
     }
 
 /*    public function person() {
