@@ -153,10 +153,13 @@ class StaffsController extends Controller
     {
         $this->authorize('delete',User::class);
         $user = User::findOrFail($id);
+        
         if($user->avatar){
             Storage::delete($user->avatar);
         }
-        $user->delete();
+
+        $user->forceDelete();
+
         return response()->json([
             "message" => 200
         ]);

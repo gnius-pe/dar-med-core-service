@@ -9,7 +9,6 @@ use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\Models\Doctor\DoctorScheduleDay;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -17,7 +16,6 @@ class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
     use HasRoles;
-    use SoftDeletes;
     /**
      * The attributes that are mass assignable.
      *
@@ -27,8 +25,6 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-
-        // 
         "surname",
         "specialitie_id",
         "mobile",
