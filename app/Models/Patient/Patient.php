@@ -47,8 +47,4 @@ class Patient extends Model
     {
         return $this->hasOne(GeographicLocation::class);
     }
-
-/*    public function person() {
-        return $this->hasOne(PatientPerson::class,"patient_id");
-    }*/
 }
