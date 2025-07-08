@@ -19,27 +19,28 @@ class StaffsController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('viewAny',User::class);
+        $this->authorize('viewAny', User::class);
 
         $search = $request->search;
 
-        $users = User::where(DB::raw("CONCAT(users.name,' ',IFNULL(users.surname,''),' ',users.email)"),"like","%".$search."%")
-                        // "name","like","%".$search."%"
-                        // ->orWhere("surname","like","%".$search."%")
-                        // ->orWhere("email","like","%".$search."%")
-                        ->orderBy("id","desc")
-                        ->whereHas("roles",function($q){
-                            $q->where("name","not like","%DOCTOR%");
-                        })
-                        ->get();
+        $users = User::where(DB::raw("CONCAT(users.name,' ',IFNULL(users.surname,''),' ',users.email)"), "like", "%" . $search . "%")
+            // "name","like","%".$search."%"
+            // ->orWhere("surname","like","%".$search."%")
+            // ->orWhere("email","like","%".$search."%")
+            ->orderBy("id", "desc")
+            ->whereHas("roles", function ($q) {
+                $q->where("name", "not like", "%DOCTOR%");
+            })
+            ->get();
 
         return response()->json([
             "users" => UserCollection::make($users),
         ]);
     }
 
-    public function config() {
-        $roles = Role::where("name","not like","%DOCTOR%")->get();
+    public function config()
+    {
+        $roles = Role::where("name", "not like", "%DOCTOR%")->get();
 
         return response()->json([
             "roles" => $roles
@@ -50,22 +51,22 @@ class StaffsController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create',User::class);
-        $users_is_valid = User::where("email",$request->email)->first();
+        $this->authorize('create', User::class);
+        $users_is_valid = User::where("email", $request->email)->first();
 
-        if($users_is_valid){
+        if ($users_is_valid) {
             return response()->json([
                 "message" => 403,
                 "message_text" => "EL USUARIO CON ESTE EMAIL YA EXISTE"
             ]);
         }
 
-        if($request->hasFile("imagen")){
-            $path = Storage::putFile("staffs",$request->file("imagen"));
+        if ($request->hasFile("imagen")) {
+            $path = Storage::putFile("staffs", $request->file("imagen"));
             $request->request->add(["avatar" => $path]);
         }
 
-        if($request->password){
+        if ($request->password) {
             $request->request->add(["password" => bcrypt($request->password)]);
         }
         // "Fri Oct 08 1993 00:00:00 GMT-0500 (hora estándar de Perú)"
@@ -81,7 +82,6 @@ class StaffsController extends Controller
         return response()->json([
             "message" => 200
         ]);
-
     }
 
     /**
@@ -89,11 +89,11 @@ class StaffsController extends Controller
      */
     public function show(string $id)
     {
-        $this->authorize('view',User::class);
+        $this->authorize('view', User::class);
         $user = User::findOrFail($id);
 
         return response()->json([
-            "user" => UserResource::make($user), 
+            "user" => UserResource::make($user),
         ]);
     }
 
@@ -102,10 +102,10 @@ class StaffsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $this->authorize('update',User::class);
-        $users_is_valid = User::where("id","<>",$id)->where("email",$request->email)->first();
+        $this->authorize('update', User::class);
+        $users_is_valid = User::where("id", "<>", $id)->where("email", $request->email)->first();
 
-        if($users_is_valid){
+        if ($users_is_valid) {
             return response()->json([
                 "message" => 403,
                 "message_text" => "EL USUARIO CON ESTE EMAIL YA EXISTE"
@@ -114,19 +114,19 @@ class StaffsController extends Controller
 
         $user = User::findOrFail($id);
 
-        if($request->hasFile("imagen")){
-            if($user->avatar){
+        if ($request->hasFile("imagen")) {
+            if ($user->avatar) {
                 Storage::delete($user->avatar);
             }
-            $path = Storage::putFile("staffs",$request->file("imagen"));
+            $path = Storage::putFile("staffs", $request->file("imagen"));
             $request->request->add(["avatar" => $path]);
         }
 
-        if($request->password){
+        if ($request->password) {
             $request->request->add(["password" => bcrypt($request->password)]);
         }
 
-        if($request->birth_date){
+        if ($request->birth_date) {
             $date_clean = preg_replace('/\(.*\)|[A-Z]{3}-\d{4}/', '', $request->birth_date);
             $request->request->add(["birth_date" => Carbon::parse($date_clean)->format("Y-m-d h:i:s")]);
         }
@@ -134,10 +134,10 @@ class StaffsController extends Controller
         // $request->request->add(["birth_date" => Carbon::parse($request->birth_date, 'GMT')->format("Y-m-d h:i:s")]);
         $user->update($request->all());
 
-        if($request->role_id && $request->role_id != $user->roles()->first()->id){
+        if ($request->role_id && $request->role_id != $user->roles()->first()->id) {
             $role_old = Role::findOrFail($user->roles()->first()->id);
             $user->removeRole($role_old);
-    
+
             $role_new = Role::findOrFail($request->role_id);
             $user->assignRole($role_new);
         }
@@ -151,10 +151,10 @@ class StaffsController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->authorize('delete',User::class);
+        $this->authorize('delete', User::class);
         $user = User::findOrFail($id);
-        
-        if($user->avatar){
+
+        if ($user->avatar) {
             Storage::delete($user->avatar);
         }
 
@@ -164,4 +164,6 @@ class StaffsController extends Controller
             "message" => 200
         ]);
     }
+
+    
 }

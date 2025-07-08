@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GeographicLocationController;
+use App\Http\Controllers\MissionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -84,4 +85,6 @@ Route::group([
     Route::get('/geographic-locations/patient/{patientId}', [GeographicLocationController::class, 'getByPatientId']);
     Route::post('/geographic-locations', [GeographicLocationController::class, 'store']);
     Route::put('/geographic-locations/{geographicLocation}', [GeographicLocationController::class, 'update']);
+
+    Route::apiResource('missions', MissionController::class);
 });
