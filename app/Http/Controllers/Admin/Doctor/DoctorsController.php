@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Doctor;
 
+use App\Models\Doctor\Doctor;
 use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
