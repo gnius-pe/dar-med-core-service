@@ -28,15 +28,19 @@ class DoctorsController extends Controller
         $this->authorize('viewAnyDoctor', Doctor::class);
         $search = $request->search;
 
-        $users = User::where(DB::raw("CONCAT(users.name,' ',IFNULL(users.surname,''),' ',users.email)"), "like", "%" . $search . "%")
-            ->orderBy("id", "desc")
+        $query = User::with(['roles', 'specialitie'])
             ->whereHas("roles", function ($q) {
                 $q->where("name", "like", "%DOCTOR%");
-            })
-            ->get();
+            });
+
+        if (!empty($search)) {
+            $query->where(DB::raw("CONCAT(users.name,' ',IFNULL(users.surname,''),' ',users.email)"), "like", "%" . $search . "%");
+        }
+
+        $users = $query->orderBy("id", "desc")->get();
 
         return response()->json([
-            "users" => UserCollection::make($users),
+            "users" => $users,
         ]);
     }
 
