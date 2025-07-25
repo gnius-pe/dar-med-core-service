@@ -15,7 +15,7 @@ class UserCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
-            "data" => UserResource::collection($this->collection),
+            "users" => UserResource::collection($this->collection),
         ];
     }
 }
