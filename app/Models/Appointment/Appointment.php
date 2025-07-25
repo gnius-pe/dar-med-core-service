@@ -2,8 +2,11 @@
 
 namespace App\Models\Appointment;
 
+use App\Models\Doctor\DoctorTicket;
 use Carbon\Carbon;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use App\Models\Patient\Patient;
 use App\Models\Doctor\Specialitie;
@@ -22,13 +25,13 @@ class Appointment extends Model
         "patient_id",
         "date_appointment",
         "specialitie_id",
-        "doctor_schedule_join_hour_id",
         "user_id",
         "amount",
         "status_pay",
         "status",
         "date_attention",
         "cron_state",
+        'doctor_ticket_id',
     ];
 
     public function setCreatedAtAttribute($value)
@@ -43,31 +46,38 @@ class Appointment extends Model
         $this->attributes["updated_at"]= Carbon::now();
     }
 
-    public function doctor() {
+    public function doctor(): BelongsTo
+    {
         return $this->belongsTo(User::class,"doctor_id");
     }
 
-    public function user() {
+    public function doctorTicket(): BelongsTo
+    {
+        return $this->belongsTo(DoctorTicket::class);
+    }
+
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function patient() {
+    public function patient(): BelongsTo
+    {
         return $this->belongsTo(Patient::class);
     }
 
-    public function specialitie() {
+    public function specialitie(): BelongsTo
+    {
         return $this->belongsTo(Specialitie::class);
     }
-    
-    public function doctor_schedule_join_hour() {
-        return $this->belongsTo(DoctorScheduleJoinHour::class)->withTrashed();
-    }
 
-    public function payments() {
+    public function payments(): HasMany
+    {
         return $this->hasMany(AppointmentPay::class);
     }
 
-    public function attention() {
+    public function attention(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
         return $this->hasOne(AppointmentAttention::class);
     }
 
@@ -103,7 +113,7 @@ class Appointment extends Model
               $query->where("doctor_id",$user->id);
             }
         }
-        
+
         if($specialitie_id){
             $query->where("specialitie_id",$specialitie_id);
         }
@@ -130,5 +140,5 @@ class Appointment extends Model
         return $query;
     }
 
-    
+
 }

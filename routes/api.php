@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\Doctor\DoctorTicketController;
 use App\Http\Controllers\GeographicLocationController;
+use App\Http\Controllers\MissionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -60,6 +62,10 @@ Route::group([
     Route::post("doctors/{id}",[DoctorsController::class,"update"]);
     Route::resource("doctors",DoctorsController::class);
     //
+    Route::get("doctor-tickets/config",[DoctorTicketController::class,"config"]);
+    Route::post("doctor-tickets/bulk-create",[DoctorTicketController::class,"bulkCreate"]);
+    Route::resource("doctor-tickets",DoctorTicketController::class);
+    //
     Route::get("patients/profile/{id}",[PatientController::class,"profile"]);
     Route::post("patients/{id}",[PatientController::class,"update"]);
     Route::resource("patients",PatientController::class);
@@ -84,4 +90,6 @@ Route::group([
     Route::get('/geographic-locations/patient/{patientId}', [GeographicLocationController::class, 'getByPatientId']);
     Route::post('/geographic-locations', [GeographicLocationController::class, 'store']);
     Route::put('/geographic-locations/{geographicLocation}', [GeographicLocationController::class, 'update']);
+
+    Route::apiResource('missions', MissionController::class);
 });

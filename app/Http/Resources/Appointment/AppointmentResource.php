@@ -8,66 +8,58 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class AppointmentResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
-            "id" => $this->resource->id,
-            "doctor_id" => $this->resource->doctor_id,
-            "doctor" => $this->resource->doctor ? [
-                "id" => $this->resource->doctor->id,
-                "full_name" => $this->resource->doctor->name. ' '.$this->resource->doctor->surname
-            ] : NULL,
-            "patient_id" => $this->resource->patient_id,
-            "patient" =>  $this->resource->patient ? 
-                [
-                    
-                    "first_phone" => $request->first_phone,
-                    "identification_number" => $request->identification_number,
-                    "first_name" => $this->resource->patient->first_name,
-                    "last_name" => $this->resource->patient->last_name,
-                    "full_name" => $this->resource->patient->first_name. ' '.$this->resource->patient->last_name,
-                    "first_phone" => $this->resource->patient->first_phone,
-                    "identification_number" => $this->resource->patient->identification_number,
-                    "name_companion" => $this->resource->patient->person->name_companion?? null,
-                    "surname_companion" => $this->resource->patient->person->surname_companion?? null,
-                ] : NULL,
-            "date_appointment" => $this->resource->date_appointment,
-            "date_appointment_format" => Carbon::parse($this->resource->date_appointment)->format("Y-m-d"),
-            "specialitie_id" => $this->resource->specialitie_id,
-            "specialitie" => $this->resource->specialitie ? [
-                "id" => $this->resource->specialitie->id,
-                "name" => $this->resource->specialitie->name,
-            ] : NULL,
-            
-            "doctor_schedule_join_hour_id" => $this->resource->doctor_schedule_join_hour_id,
-            "segment_hour" => $this->resource->doctor_schedule_join_hour ? [
-                "id" => $this->resource->doctor_schedule_join_hour->id,
-                "doctor_schedule_day_id" => $this->resource->doctor_schedule_join_hour->doctor_schedule_day_id,
-                "doctor_schedule_hour_id" => $this->resource->doctor_schedule_join_hour->doctor_schedule_hour_id,
-                // "is_appoinment" => $appointment ? true : false,
-                "format_segment" => [
-                    "id" => $this->resource->doctor_schedule_join_hour->doctor_schedule_hour->id,
-                    "hour_start" => $this->resource->doctor_schedule_join_hour->doctor_schedule_hour->hour_start,
-                    "hour_end" => $this->resource->doctor_schedule_join_hour->doctor_schedule_hour->hour_end,
-                    "format_hour_start" => Carbon::parse(date("Y-m-d").' '.$this->resource->doctor_schedule_join_hour->doctor_schedule_hour->hour_start)->format("h:i A"),
-                    "format_hour_end" => Carbon::parse(date("Y-m-d").' '.$this->resource->doctor_schedule_join_hour->doctor_schedule_hour->hour_end)->format("h:i A"),
-                    "hour" => $this->resource->doctor_schedule_join_hour->doctor_schedule_hour->hour,
-                ]
-            ]: NULL,
-            "user_id" => $this->resource->user_id,
-            "user" => $this->resource->user ? [
-                "id" => $this->resource->doctor->id,
-                "full_name" => $this->resource->doctor->name. ' '.$this->resource->doctor->surname
-            ]: NULL,
-            "amount" => $this->resource->amount,
-            "status_pay" => $this->resource->status_pay,
-            "status" => $this->resource->status,
-            "created_at" => $this->resource->created_at->format("Y-m-d h:i A"),
+            'id' => $this->id,
+            'doctor' => $this->doctor ? [
+                'id' => $this->doctor->id,
+                'full_name' => $this->doctor->name . ' ' . ($this->doctor->surname ?? ''),
+                'name' => $this->doctor->name,
+                'surname' => $this->doctor->surname,
+                'avatar_url' => $this->doctor->avatar ? env("APP_URL") . "storage/" . $this->doctor->avatar : null,
+            ] : [
+                'id' => null,
+                'full_name' => 'Doctor no disponible',
+                'name' => 'No disponible',
+                'surname' => '',
+                'avatar_url' => null,
+            ],
+            'patient' => $this->patient ? [
+                'id' => $this->patient->id,
+                'full_name' => $this->patient->first_name . ' ' . ($this->patient->last_name ?? ''),
+                'first_name' => $this->patient->first_name,
+                'last_name' => $this->patient->last_name,
+                'identification_number' => $this->patient->identification_number,
+            ] : [
+                'id' => null,
+                'full_name' => 'Paciente no disponible',
+                'first_name' => 'No disponible',
+                'last_name' => '',
+                'identification_number' => '',
+            ],
+            'specialitie' => $this->specialitie ? [
+                'id' => $this->specialitie->id,
+                'name' => $this->specialitie->name,
+            ] : [
+                'id' => null,
+                'name' => 'Sin especialidad',
+            ],
+            'date_appointment' => $this->date_appointment,
+            'date_appointment_format' => Carbon::parse($this->date_appointment)->format('d M Y'),
+            'time_appointment' => Carbon::parse($this->date_appointment)->format('h:i A'),
+            'date_time_formatted' => Carbon::parse($this->date_appointment)->format('d/m/Y h:i A'),
+            'status' => $this->status,
+            'status_pay' => $this->status_pay,
+            'status_text' => $this->status === 1 ? 'PENDIENTE' : 'ATENDIDO',
+            'amount' => $this->amount,
+            'doctor_ticket' => $this->doctorTicket ? [
+                'id' => $this->doctorTicket->id,
+                'available_tickets' => $this->doctorTicket->available_tickets,
+                'total_tickets' => $this->doctorTicket->total_tickets,
+            ] : null,
+            'created_at' => Carbon::parse($this->created_at)->format('d M Y'),
+            'created_at_full' => Carbon::parse($this->created_at)->format('d/m/Y h:i A'),
         ];
     }
 }

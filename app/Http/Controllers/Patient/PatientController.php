@@ -158,7 +158,7 @@ class PatientController extends Controller
         $this->authorize('delete', Patient::class);
 
         $patient = Patient::findOrFail($id);
-        $patient->delete();
+        $patient->forceDelete();
 
         return response()->json([
             "message" => 200
