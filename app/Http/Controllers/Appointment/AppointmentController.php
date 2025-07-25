@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Appointment;
 
+use App\Http\Resources\Appointment\AppointmentCollection;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,8 +14,6 @@ use App\Models\Appointment\Appointment;
 use App\Models\Appointment\AppointmentPay;
 use App\Services\DoctorTicketService;
 use Illuminate\Support\Facades\DB;
-use App\Http\Resources\Appointment\AppointmentResource;
-use App\Http\Resources\Appointment\AppointmentCollection;
 
 class AppointmentController extends Controller
 {
@@ -30,13 +29,15 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('viewAny',Appointment::class);
+        $this->authorize('viewAny', Appointment::class);
         $specialities_id = $request->specialitie_id;
         $name_doctor = $request->search;
         $date = $request->date;
         $user = auth("api")->user();
 
-        $appointments = Appointment::filterAdvance($specialities_id,$name_doctor,$date,$user)->orderBy("id","desc")
+        $appointments = Appointment::with(['doctor', 'patient', 'specialitie', 'doctorTicket'])
+            ->filterAdvance($specialities_id, $name_doctor, $date, $user)
+            ->orderBy("id", "desc")
             ->paginate(20);
 
         return response()->json([
@@ -244,7 +245,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
         $this->authorize('view',$appointment);
         return response()->json([
-            "appointment" => AppointmentResource::make($appointment)
+            "appointment" => $appointment
         ]);
     }
 
