@@ -14,8 +14,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Redis;
 use App\Models\Appointment\Appointment;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Resources\User\UserResource;
-use App\Http\Resources\User\UserCollection;
 use App\Http\Resources\Appointment\AppointmentCollection;
 
 class DoctorsController extends Controller
@@ -63,7 +61,6 @@ class DoctorsController extends Controller
                 "num_appointment" => $num_appointment,
                 "money_of_appointments" => $money_of_appointments,
                 "num_appointment_pendings" => $num_appointment_pendings,
-                "doctor" => UserResource::make($user),
                 "appointment_pendings" => AppointmentCollection::make($appointment_pendings),
                 "appointments" => $appointments->map(function ($appointment) {
                     return [
@@ -159,7 +156,7 @@ class DoctorsController extends Controller
         $user = User::findOrFail($id);
 
         return response()->json([
-            "doctor" => UserResource::make($user),
+            "doctor" => $user,
         ]);
     }
 
