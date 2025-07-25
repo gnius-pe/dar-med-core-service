@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Staff;
 
+use App\Http\Resources\User\UserCollection;
 use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -10,8 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Resources\User\UserResource;
-use App\Http\Resources\User\UserCollection;
 
 class StaffsController extends Controller
 {
@@ -24,16 +23,15 @@ class StaffsController extends Controller
 
         $search = $request->search;
 
-        $users = User::where(DB::raw("CONCAT(users.name,' ',IFNULL(users.surname,''),' ',users.email)"), "like", "%" . $search . "%")
+        $users = User::with(['roles', 'permissions'])
+        ->where(DB::raw("CONCAT(users.name,' ',IFNULL(users.surname,''),' ',users.email)"), "like", "%" . $search . "%")
             ->orderBy("id", "desc")
             ->whereHas("roles", function ($q) {
                 $q->where("name", "not like", "%DOCTOR%");
             })
             ->get();
 
-        return response()->json([
-            "users" => UserCollection::make($users),
-        ]);
+        return response()->json(new UserCollection($users));
     }
 
     public function config(): JsonResponse
@@ -90,7 +88,7 @@ class StaffsController extends Controller
         $user = User::findOrFail($id);
 
         return response()->json([
-            "user" => UserResource::make($user),
+            "user" => $user,
         ]);
     }
 
