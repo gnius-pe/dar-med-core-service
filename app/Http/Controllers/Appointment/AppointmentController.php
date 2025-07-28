@@ -134,6 +134,7 @@ class AppointmentController extends Controller
         }
         return response()->json([
             "message" => 200,
+            "patient_id" => $patient->id,
             "first_name" => $patient->first_name,
             "last_name" => $patient->last_name,
             "first_phone" => $patient->first_phone,
