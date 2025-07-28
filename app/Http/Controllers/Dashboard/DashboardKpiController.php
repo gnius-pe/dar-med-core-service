@@ -3,22 +3,24 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment\Appointment;
-use App\Http\Resources\Appointment\AppointmentCollection;
+use App\Models\Patient\Patient;
+use App\Http\Resources\Appointment\AppointmentResource;
 
 class DashboardKpiController extends Controller
 {
-    
-    public function config(){
+
+    public function config(): JsonResponse
+    {
         $users = User::orderBy("id","desc")
-                ->whereHas("roles",function($q){
-                    $q->where("name","like","%DOCTOR%");
-                })
-                // ->where("state",1)
-                ->get();
+            ->whereHas("roles",function($q){
+                $q->where("name","like","%DOCTOR%");
+            })
+            ->get();
 
         return response()->json([
             "doctors" => $users->map(function($user){
@@ -29,379 +31,244 @@ class DashboardKpiController extends Controller
             }),
         ]);
     }
-    
-    public function dashboard_admin(Request $request){
+
+    public function dashboard_admin(Request $request): JsonResponse
+    {
         if(!auth('api')->user()->can('admin_dashboard')){
             return response()->json(["message" => "EL USUARIO NO ESTA AUTORIZADO"],403);
         }
+
         date_default_timezone_set('America/Lima');
-        // MES ACTUAL - APPOINTMENTS
         $now = now();
-        $num_appointments_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->whereYear("date_appointment",$now->format("Y"))
-                            ->whereMonth("date_appointment",$now->format("m"))
-                            ->count();
-        // MES ANTERIOR - APPOINTMENTS
-        $before = now()->subMonth();
-        $num_appointments_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->whereYear("date_appointment",$before->format("Y"))
-                            ->whereMonth("date_appointment",$before->format("m"))
-                            ->count();
 
-        // VS % - APPOINTMENTS
-        $porcentajeD = 0;
-        if($num_appointments_before > 0){
-            $porcentajeD = (($num_appointments_current - $num_appointments_before) / $num_appointments_before)*100;
-        }
+        // Estadísticas básicas actuales
+        $total_appointments = Appointment::whereNull('deleted_at')->count();
+        $total_patients = Patient::whereNull('deleted_at')->count();
+        $total_doctors = User::whereHas("roles", function($q){
+            $q->where("name","like","%DOCTOR%");
+        })->count();
 
-        // MES ACTUAL - PATIENTS
-        $now = now();
-        $num_patients_current = DB::table("patients")->where("deleted_at",NULL)
-                            ->whereYear("created_at",$now->format("Y"))
-                            ->whereMonth("created_at",$now->format("m"))
-                            ->count();
-        // MES ANTERIOR - PATIENTS
-        $before = now()->subMonth();
-        $num_patients_before = DB::table("patients")->where("deleted_at",NULL)
-                            ->whereYear("created_at",$before->format("Y"))
-                            ->whereMonth("created_at",$before->format("m"))
-                            ->count();
+        $total_staff = User::whereHas("roles", function($q){
+            $q->where("name","not like","%DOCTOR%");
+        })->count();
 
-        // VS % - PATIENTS
-        $porcentajeDP = 0;
-        if($num_patients_before > 0){
-            $porcentajeDP = (($num_patients_current - $num_patients_before) / $num_patients_before)*100;
-        }
+        // Citas de hoy
+        $appointments_today = Appointment::whereNull('deleted_at')
+            ->whereDate('date_appointment', $now->toDateString())
+            ->count();
 
-        // MES ACTUAL - APPOINTMENTS-ATTENTION
-        $now = now();
-        $num_appointments_attetion_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->whereYear("date_attention",$now->format("Y"))
-                            ->whereMonth("date_attention",$now->format("m"))
-                            ->count();
-        // MES ANTERIOR - APPOINTMENTS-ATTENTION
-        $before = now()->subMonth();
-        $num_appointments_attetion_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->whereYear("date_attention",$before->format("Y"))
-                            ->whereMonth("date_attention",$before->format("m"))
-                            ->count();
+        // Citas pendientes (status = 1)
+        $pending_appointments = Appointment::whereNull('deleted_at')
+            ->where('status', 1)
+            ->count();
 
-        // VS % - APPOINTMENTS-ATTENTION
-        $porcentajeDA = 0;
-        if($num_appointments_attetion_before > 0){
-            $porcentajeDA = (($num_appointments_attetion_current - $num_appointments_attetion_before) / $num_appointments_attetion_before)*100;
-        }
+        // Citas atendidas (status = 2)
+        $completed_appointments = Appointment::whereNull('deleted_at')
+            ->where('status', 2)
+            ->count();
 
+        // Últimas citas pendientes para mostrar en tabla
+        $recent_appointments = Appointment::with(['doctor', 'patient', 'specialitie'])
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->orderBy('date_appointment', 'asc')
+            ->take(10)
+            ->get();
 
-        // MES ACTUAL - APPOINTMENTS-TOTAL $
-        $now = now();
-        $num_appointments_total_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->whereYear("date_appointment",$now->format("Y"))
-                            ->whereMonth("date_appointment",$now->format("m"))
-                            ->sum("appointments.amount");
-        // MES ANTERIOR - APPOINTMENTS-TOTAL $
-        $before = now()->subMonth();
-        $num_appointments_total_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->whereYear("date_appointment",$before->format("Y"))
-                            ->whereMonth("date_appointment",$before->format("m"))
-                            ->sum("appointments.amount");
-
-        // VS % - APPOINTMENTS-TOTAL $
-        $porcentajeDT = 0;
-        if($num_appointments_total_before > 0){
-            $porcentajeDT = (($num_appointments_total_current - $num_appointments_total_before) / $num_appointments_total_before)*100;
-        }
-
-        $apointments = Appointment::whereYear("date_appointment",$now->format("Y"))
-                                ->whereMonth("date_appointment",$now->format("m"))
-                                ->where("status",1)
-                                ->orderBy("id","desc")
-                                ->take(5)
-                                ->get();
         return response()->json([
-            "appointments" => AppointmentCollection::make($apointments),
-            "num_appointments_current" => $num_appointments_current,
-            "num_appointments_before" => $num_appointments_before,
-            "porcentaje_d" => round($porcentajeD,2),
-            // 
-            "num_patients_current" => $num_patients_current,
-            "num_patients_before" => $num_patients_before,
-            "porcentaje_dp" => round($porcentajeDP,2),
-            // 
-            "num_appointments_attetion_current" => $num_appointments_attetion_current,
-            "num_appointments_attetion_before" => $num_appointments_attetion_before,
-            "porcentaje_da" => round($porcentajeDA,2),
-            // 
-            "num_appointments_total_current" => $num_appointments_total_current,
-            "num_appointments_total_before" => $num_appointments_total_before,
-            "porcentaje_dt" => round($porcentajeDT,2),
+            "appointments" => [
+                "data" => AppointmentResource::collection($recent_appointments)
+            ],
+
+            // Estadísticas principales
+            "total_appointments" => $total_appointments,
+            "total_patients" => $total_patients,
+            "total_doctors" => $total_doctors,
+            "total_staff" => $total_staff,
+
+            // Estadísticas del día
+            "appointments_today" => $appointments_today,
+            "pending_appointments" => $pending_appointments,
+            "completed_appointments" => $completed_appointments,
         ]);
     }
 
-    public function dashboard_admin_year(Request $request) {
-
+    public function dashboard_admin_year(Request $request): JsonResponse
+    {
         if(!auth('api')->user()->can('admin_dashboard')){
             return response()->json(["message" => "EL USUARIO NO ESTA AUTORIZADO"],403);
         }
-        $year = $request->year;
 
-        $query_patient_by_genders = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                        ->whereYear("appointments.date_appointment",$year)
-                        ->join("patients","appointments.patient_id", "=", "patients.id")
-                        ->select(
-                            DB::raw("YEAR(appointments.date_appointment) as year"),
-                            DB::raw("MONTH(appointments.date_appointment) as month"),
-                            DB::raw("SUM(CASE WHEN patients.gender = 1 THEN 1 ELSE 0 END) as hombre"),
-                            DB::raw("SUM(CASE WHEN patients.gender = 2 THEN 1 ELSE 0 END) as mujer")
-                        )->groupBy("year",'month')
-                        ->orderBy("year")
-                        ->orderBy("month")
-                        ->get();
+        $year = $request->year ?? date('Y');
 
-        $query_patients_speciality = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                                    ->whereYear("appointments.date_appointment",$year)
-                                    ->join("specialities","appointments.specialitie_id", "=", "specialities.id")
-                                    ->select("specialities.name as name",DB::raw("COUNT(appointments.specialitie_id) as count"))
-                                    ->groupBy("specialities.name")
-                                    ->get();
+        // Pacientes por género por mes
+        $query_patient_by_genders = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $hombres = Patient::whereNull('deleted_at')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->where('gender', 1)
+                ->count();
 
+            $mujeres = Patient::whereNull('deleted_at')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->where('gender', 2)
+                ->count();
+
+            $query_patient_by_genders[] = [
+                'month' => $month,
+                'hombre' => $hombres,
+                'mujer' => $mujeres,
+            ];
+        }
+
+        // Citas por especialidad
+        $query_patients_speciality = DB::table("appointments")
+            ->whereNull("appointments.deleted_at")
+            ->whereYear("appointments.date_appointment", $year)
+            ->join("specialities","appointments.specialitie_id", "=", "specialities.id")
+            ->select("specialities.name as name", DB::raw("COUNT(appointments.id) as count"))
+            ->groupBy("specialities.id", "specialities.name")
+            ->orderBy("count", "desc")
+            ->get();
+
+        // Calcular porcentajes de especialidades
+        $total_appointments_speciality = $query_patients_speciality->sum("count");
         $query_patients_speciality_percentage = collect([]);
-        $total_patients_speciality = $query_patients_speciality->sum("count");
-        foreach ($query_patients_speciality as $key => $query_specialitity) {
-           $count_by_specialitity = $query_specialitity->count;
-           // 100
-           // 15 -> 15/100 -> 0.15 * 100 = 15 %    
-           $percentage = round(($count_by_specialitity/$total_patients_speciality) * 100,2);
-           $query_patients_speciality_percentage->push([
-            "name" => $query_specialitity->name,
-            "percentage" => $percentage,
-           ]);
-        }
 
-        $query_income_year = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                        ->whereYear("appointments.date_appointment",$year)
-                        // ->where("appointments.status_pay",2)
-                        ->select(
-                            DB::raw("YEAR(appointments.date_appointment) as year"),
-                            DB::raw("MONTH(appointments.date_appointment) as month"),
-                            DB::raw("SUM(appointments.amount) as income")
-                        )->groupBy("year",'month')
-                        ->orderBy("year")
-                        ->orderBy("month")
-                        ->get();
-        $months_name = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
-        return response()->json([
-            "months_name" => $months_name,
-            "query_income_year" => $query_income_year,
-            "query_patients_speciality_percentage" => $query_patients_speciality_percentage,
-            "query_patients_speciality" => $query_patients_speciality,
-            "query_patient_by_genders" => $query_patient_by_genders,
-        ]);
+        foreach ($query_patients_speciality as $speciality) {
+            $percentage = $total_appointments_speciality > 0
+                ? round(($speciality->count / $total_appointments_speciality) * 100, 2)
+                : 0;
 
-    }
-
-    public function dashboard_doctor(Request $request){
-
-        if(!auth('api')->user()->can('doctor_dashboard')){
-            return response()->json(["message" => "EL USUARIO NO ESTA AUTORIZADO"],403);
-        }
-        date_default_timezone_set('America/Lima');
-
-        $doctor_id = $request->doctor_id;
-        // MES ACTUAL - APPOINTMENTS
-        $now = now();
-        $num_appointments_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_appointment",$now->format("Y"))
-                            ->whereMonth("date_appointment",$now->format("m"))
-                            ->count();
-        // MES ANTERIOR - APPOINTMENTS
-        $before = now()->subMonth();
-        $num_appointments_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_appointment",$before->format("Y"))
-                            ->whereMonth("date_appointment",$before->format("m"))
-                            ->count();
-
-        // VS % - APPOINTMENTS
-        $porcentajeD = 0;
-        if($num_appointments_before > 0){
-            $porcentajeD = (($num_appointments_current - $num_appointments_before) / $num_appointments_before)*100;
-        }
-
-        // MES ACTUAL - APPOINTMENTS-ATTENTION
-        $now = now();
-        $num_appointments_attetion_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_attention",$now->format("Y"))
-                            ->whereMonth("date_attention",$now->format("m"))
-                            ->count();
-        // MES ANTERIOR - APPOINTMENTS-ATTENTION
-        $before = now()->subMonth();
-        $num_appointments_attetion_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_attention",$before->format("Y"))
-                            ->whereMonth("date_attention",$before->format("m"))
-                            ->count();
-
-        // VS % - APPOINTMENTS-ATTENTION
-        $porcentajeDA = 0;
-        if($num_appointments_attetion_before > 0){
-            $porcentajeDA = (($num_appointments_attetion_current - $num_appointments_attetion_before) / $num_appointments_attetion_before)*100;
-        }
-
-
-        // MES ACTUAL - APPOINTMENTS-TOTAL / PAGO TOTAL $
-        $now = now();
-        $num_appointments_total_pay_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_appointment",$now->format("Y"))
-                            ->whereMonth("date_appointment",$now->format("m"))
-                            ->where("status_pay",1)
-                            ->sum("appointments.amount");
-        // MES ANTERIOR - APPOINTMENTS-TOTAL / PAGO TOTAL $
-        $before = now()->subMonth();
-        $num_appointments_total_pay_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_appointment",$before->format("Y"))
-                            ->whereMonth("date_appointment",$before->format("m"))
-                            ->where("status_pay",1)
-                            ->sum("appointments.amount");
-
-        // VS % - APPOINTMENTS-TOTAL $
-        $porcentajeDT = 0;
-        if($num_appointments_total_pay_before > 0){
-            $porcentajeDT = (($num_appointments_total_pay_current - $num_appointments_total_pay_before) / $num_appointments_total_pay_before)*100;
-        }
-
-        // MES ACTUAL - APPOINTMENTS-TOTAL / PAGO PENDIENTE $
-        $now = now();
-        $num_appointments_total_pending_current = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_appointment",$now->format("Y"))
-                            ->whereMonth("date_appointment",$now->format("m"))
-                            ->where("status_pay",2)
-                            ->sum("appointments.amount");
-        // MES ANTERIOR - APPOINTMENTS-TOTAL / PAGO PENDIENTE $
-        $before = now()->subMonth();
-        $num_appointments_total_pending_before = DB::table("appointments")->where("deleted_at",NULL)
-                            ->where("doctor_id",$doctor_id)
-                            ->whereYear("date_appointment",$before->format("Y"))
-                            ->whereMonth("date_appointment",$before->format("m"))
-                            ->where("status_pay",2)
-                            ->sum("appointments.amount");
-
-        // VS % - APPOINTMENTS-TOTAL $
-        $porcentajeDTP = 0;
-        if($num_appointments_total_pending_before > 0){
-            $porcentajeDTP = (($num_appointments_total_pending_current - $num_appointments_total_pending_before) / $num_appointments_total_pending_before)*100;
-        }
-
-        $apointments = Appointment::whereYear("date_appointment",$now->format("Y"))
-                                ->where("doctor_id",$doctor_id)
-                                ->whereMonth("date_appointment",$now->format("m"))
-                                ->where("status",1)
-                                ->orderBy("id","desc")
-                                ->take(5)
-                                ->get();
-        return response()->json([
-            "apointments" => AppointmentCollection::make($apointments),
-            "num_appointments_current" => $num_appointments_current,
-            "num_appointments_before" => $num_appointments_before,
-            "porcentaje_d" => round($porcentajeD,2),
-            // 
-            "num_appointments_attetion_current" => $num_appointments_attetion_current,
-            "num_appointments_attetion_before" => $num_appointments_attetion_before,
-            "porcentaje_da" => round($porcentajeDA,2),
-            // 
-            "num_appointments_total_pay_current" => $num_appointments_total_pay_current,
-            "num_appointments_total_pay_before" => $num_appointments_total_pay_before,
-            "porcentaje_dt" => round($porcentajeDT,2),
-            // 
-            "num_appointments_total_pending_current" => $num_appointments_total_pending_current,
-            "num_appointments_total_pending_before" => $num_appointments_total_pending_before,
-            "porcentaje_dtp" => round($porcentajeDTP,2),
-        ]);
-    }
-
-    public function dashboard_doctor_year(Request $request) {
-
-        if(!auth('api')->user()->can('doctor_dashboard')){
-            return response()->json(["message" => "EL USUARIO NO ESTA AUTORIZADO"],403);
-        }
-        $year = $request->year;
-        $doctor_id = $request->doctor_id;
-
-        $query_patient_by_genders = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                        ->whereYear("appointments.date_appointment",$year)
-                        ->where("appointments.doctor_id",$doctor_id)
-                        ->join("patients","appointments.patient_id", "=", "patients.id")
-                        ->select(
-                            DB::raw("YEAR(appointments.date_appointment) as year"),
-                            DB::raw("SUM(CASE WHEN patients.gender = 1 THEN 1 ELSE 0 END) as hombre"),
-                            DB::raw("SUM(CASE WHEN patients.gender = 2 THEN 1 ELSE 0 END) as mujer")
-                        )->groupBy("year")
-                        ->orderBy("year")
-                        ->get();
-
-        $query_income_year = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                        ->whereYear("appointments.date_appointment",$year)
-                        ->where("appointments.doctor_id",$doctor_id)
-                        // ->where("appointments.status_pay",2)
-                        ->select(
-                            DB::raw("YEAR(appointments.date_appointment) as year"),
-                            DB::raw("MONTH(appointments.date_appointment) as month"),
-                            DB::raw("SUM(appointments.amount) as income")
-                        )->groupBy("year",'month')
-                        ->orderBy("year")
-                        ->orderBy("month")
-                        ->get();
-
-
-        $query_n_appointment_year = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                                    ->whereYear("appointments.date_appointment",$year)
-                                    ->where("appointments.doctor_id",$doctor_id)
-                                    ->select(
-                                        DB::raw("YEAR(appointments.date_appointment) as year"),
-                                        DB::raw("MONTH(appointments.date_appointment) as month"),
-                                        DB::raw("COUNT(*) as count_appointments")
-                                    )->groupBy("year",'month')
-                                    ->orderBy("year")
-                                    ->orderBy("month")
-                                    ->get();
-
-        $query_n_appointment_year_before = DB::table("appointments")->where("appointments.deleted_at",NULL)
-                                    ->whereYear("appointments.date_appointment",$year - 1)
-                                    ->where("appointments.doctor_id",$doctor_id)
-                                    ->select(
-                                        DB::raw("YEAR(appointments.date_appointment) as year"),
-                                        DB::raw("MONTH(appointments.date_appointment) as month"),
-                                        DB::raw("COUNT(*) as count_appointments")
-                                    )->groupBy("year",'month')
-                                    ->orderBy("year")
-                                    ->orderBy("month")
-                                    ->get();
-         
-        $join_n_appointments_years = collect([]);
-        $months_name = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
-
-        foreach ($query_n_appointment_year->merge($query_n_appointment_year_before)->groupBy("month") as $key => $month_year) {
-            // dd($month_year);
-            $join_n_appointments_years->push([
-                "month" => $key,
-                "month_name" => $months_name[$key - 1],
-                "details" => $month_year
+            $query_patients_speciality_percentage->push([
+                "name" => $speciality->name,
+                "count" => $speciality->count,
+                "percentage" => $percentage,
             ]);
         }
 
+        // Citas por mes del año
+        $appointments_by_month = [];
+        $months_name = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $count = Appointment::whereNull('deleted_at')
+                ->whereYear('date_appointment', $year)
+                ->whereMonth('date_appointment', $month)
+                ->count();
+
+            $appointments_by_month[] = [
+                'month' => $month,
+                'month_name' => $months_name[$month - 1],
+                'count' => $count,
+            ];
+        }
+
         return response()->json([
             "months_name" => $months_name,
-            "join_n_appointments_years" => $join_n_appointments_years,
-            "query_n_appointment_year_before" => $query_n_appointment_year_before,
-            "query_n_appointment_year" => $query_n_appointment_year,
-            "query_income_year" => $query_income_year,
             "query_patient_by_genders" => $query_patient_by_genders,
+            "query_patients_speciality" => $query_patients_speciality,
+            "query_patients_speciality_percentage" => $query_patients_speciality_percentage,
+            "appointments_by_month" => $appointments_by_month,
         ]);
+    }
 
+    public function dashboard_doctor(Request $request): JsonResponse
+    {
+        if(!auth('api')->user()->can('doctor_dashboard')){
+            return response()->json(["message" => "EL USUARIO NO ESTA AUTORIZADO"],403);
+        }
+
+        date_default_timezone_set('America/Lima');
+        $doctor_id = $request->doctor_id;
+        $now = now();
+
+        // Estadísticas del doctor
+        $total_appointments = Appointment::whereNull('deleted_at')
+            ->where('doctor_id', $doctor_id)
+            ->count();
+
+        $appointments_today = Appointment::whereNull('deleted_at')
+            ->where('doctor_id', $doctor_id)
+            ->whereDate('date_appointment', $now->toDateString())
+            ->count();
+
+        $pending_appointments = Appointment::whereNull('deleted_at')
+            ->where('doctor_id', $doctor_id)
+            ->where('status', 1)
+            ->count();
+
+        $completed_appointments = Appointment::whereNull('deleted_at')
+            ->where('doctor_id', $doctor_id)
+            ->where('status', 2)
+            ->count();
+
+        // Últimas citas del doctor
+        $recent_appointments = Appointment::with(['patient', 'specialitie'])
+            ->whereNull('deleted_at')
+            ->where('doctor_id', $doctor_id)
+            ->where('status', 1)
+            ->orderBy('date_appointment', 'asc')
+            ->take(10)
+            ->get();
+
+        return response()->json([
+            // SOLUCIÓN: Usar AppointmentResource::collection() en lugar de AppointmentCollection::make()
+            "appointments" => [
+                "data" => AppointmentResource::collection($recent_appointments)
+            ],
+            "total_appointments" => $total_appointments,
+            "appointments_today" => $appointments_today,
+            "pending_appointments" => $pending_appointments,
+            "completed_appointments" => $completed_appointments,
+        ]);
+    }
+
+    public function dashboard_doctor_year(Request $request): JsonResponse
+    {
+        if(!auth('api')->user()->can('doctor_dashboard')){
+            return response()->json(["message" => "EL USUARIO NO ESTA AUTORIZADO"],403);
+        }
+
+        $year = $request->year ?? date('Y');
+        $doctor_id = $request->doctor_id;
+
+        // Pacientes atendidos por género
+        $query_patient_by_genders = DB::table("appointments")
+            ->whereNull("appointments.deleted_at")
+            ->whereYear("appointments.date_appointment", $year)
+            ->where("appointments.doctor_id", $doctor_id)
+            ->join("patients","appointments.patient_id", "=", "patients.id")
+            ->select(
+                DB::raw("SUM(CASE WHEN patients.gender = 1 THEN 1 ELSE 0 END) as hombre"),
+                DB::raw("SUM(CASE WHEN patients.gender = 2 THEN 1 ELSE 0 END) as mujer")
+            )
+            ->first();
+
+        // Citas por mes para el doctor
+        $appointments_by_month = [];
+        $months_name = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $count = Appointment::whereNull('deleted_at')
+                ->where('doctor_id', $doctor_id)
+                ->whereYear('date_appointment', $year)
+                ->whereMonth('date_appointment', $month)
+                ->count();
+
+            $appointments_by_month[] = [
+                'month' => $month,
+                'month_name' => $months_name[$month - 1],
+                'count' => $count,
+            ];
+        }
+
+        return response()->json([
+            "months_name" => $months_name,
+            "query_patient_by_genders" => $query_patient_by_genders,
+            "appointments_by_month" => $appointments_by_month,
+        ]);
     }
 }
