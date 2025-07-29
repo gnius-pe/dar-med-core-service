@@ -25,7 +25,7 @@ class Doctor extends Model
         'email_verified_at',
         'password',
         'avatar',
-        'phone',
+        'mobile',
         'birth_date',
         'gender',
         'education',
