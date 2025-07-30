@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Appointment;
 
 use App\Http\Resources\Appointment\AppointmentCollection;
+use App\Http\Resources\Appointment\AppointmentResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -243,10 +244,22 @@ class AppointmentController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $appointment = Appointment::findOrFail($id);
-        $this->authorize('view',$appointment);
+        $appointment = Appointment::with([
+            'doctor',
+            'patient',
+            'specialitie',
+            'doctorTicket',
+            'attention'
+        ])->findOrFail($id);
+
+        $this->authorize('view', $appointment);
+
         return response()->json([
-            "appointment" => $appointment
+            "appointment" => new AppointmentResource($appointment),
+            "appointment_attention" => $appointment->attention ? [
+                "description" => $appointment->attention->description,
+                "receta_medica" => json_decode($appointment->attention->receta_medica, true) ?? []
+            ] : null
         ]);
     }
 

@@ -31,12 +31,14 @@ class AppointmentResource extends JsonResource
                 'first_name' => $this->patient->first_name,
                 'last_name' => $this->patient->last_name,
                 'identification_number' => $this->patient->identification_number,
+                'first_phone' => $this->patient->first_phone,
             ] : [
                 'id' => null,
                 'full_name' => 'Paciente no disponible',
                 'first_name' => 'No disponible',
                 'last_name' => '',
                 'identification_number' => '',
+                'first_phone' => '',
             ],
             'specialitie' => $this->specialitie ? [
                 'id' => $this->specialitie->id,
