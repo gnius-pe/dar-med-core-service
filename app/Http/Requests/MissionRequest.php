@@ -26,6 +26,7 @@ class MissionRequest extends FormRequest
             'description' => 'required|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'state' => 'required|boolean',
         ];
 
         // Para actualización, hacer el nombre único excepto para el registro actual
@@ -53,6 +54,8 @@ class MissionRequest extends FormRequest
             'end_date.required' => 'La fecha de fin es obligatoria.',
             'end_date.date' => 'La fecha de fin debe ser una fecha válida.',
             'end_date.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            'state.required' => 'El estado de la misión es obligatorio.',
+            'state.boolean' => 'El estado de la misión debe ser verdadero o falso.',
         ];
     }
 }

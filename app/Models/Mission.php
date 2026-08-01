@@ -9,10 +9,15 @@ class Mission extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'state' => 'boolean',
+    ];
+
     protected $fillable = [
         'name',
         'description',
         'start_date',
         'end_date',
+        'state',
     ];
 }
