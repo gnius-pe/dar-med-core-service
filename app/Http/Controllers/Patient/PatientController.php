@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Requests\PatientRequest;
+use App\Services\ApisperuService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,8 @@ use App\Http\Resources\Appointment\AppointmentCollection;
 
 class PatientController extends Controller
 {
+    public function __construct(private ApisperuService $apisperuService) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -232,5 +235,26 @@ class PatientController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    public function lookupDni(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Patient::class);
+
+        $request->validate([
+            'dni' => 'required|string|size:8|regex:/^\d+$/',
+        ]);
+
+        $data = $this->apisperuService->lookupDni($request->input('dni'));
+
+        if (!$data) {
+            return response()->json([
+                'message' => 'No se encontró información para el DNI ingresado.',
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => $data,
+        ]);
     }
 }
