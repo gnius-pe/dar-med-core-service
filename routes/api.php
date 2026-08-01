@@ -66,6 +66,7 @@ Route::group([
     Route::post("doctor-tickets/bulk-create",[DoctorTicketController::class,"bulkCreate"]);
     Route::resource("doctor-tickets",DoctorTicketController::class);
     //
+    Route::get('patients/lookup/dni', [PatientController::class, 'lookupDni']);
     Route::get("patients/profile/{id}",[PatientController::class,"profile"]);
     Route::post("patients/{id}",[PatientController::class,"update"]);
     Route::resource("patients",PatientController::class);
