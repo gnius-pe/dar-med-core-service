@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'apisperu' => [
+        'token' => env('APISPERU_TOKEN'),
+        'base_url' => env('APISPERU_URL', 'https://dniruc.apisperu.com/api/v1'),
+    ],
+
 ];
