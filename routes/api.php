@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\Doctor\DoctorTicketController;
 use App\Http\Controllers\GeographicLocationController;
 use App\Http\Controllers\MissionController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -93,4 +94,8 @@ Route::group([
     Route::put('/geographic-locations/{geographicLocation}', [GeographicLocationController::class, 'update']);
 
     Route::apiResource('missions', MissionController::class);
+
+    Route::get('settings/selected-mission', [SettingsController::class, 'show']);
+    Route::post('settings/selected-mission', [SettingsController::class, 'update']);
+    Route::delete('settings/selected-mission', [SettingsController::class, 'destroy']);
 });
