@@ -90,6 +90,7 @@ Route::group([
     Route::post("dashboard/doctor-year",[DashboardKpiController::class,"dashboard_doctor_year"]);
 
     Route::get('/geographic-locations/patient/{patientId}', [GeographicLocationController::class, 'getByPatientId']);
+    Route::post('/geographic-locations/by-patient-ids', [GeographicLocationController::class, 'getByPatientIds']);
     Route::post('/geographic-locations', [GeographicLocationController::class, 'store']);
     Route::put('/geographic-locations/{geographicLocation}', [GeographicLocationController::class, 'update']);
 

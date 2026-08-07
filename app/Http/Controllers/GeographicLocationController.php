@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\GeographicLocationRequest;
 use App\Models\GeographicLocation;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class GeographicLocationController extends Controller
 {
@@ -32,13 +33,24 @@ class GeographicLocationController extends Controller
     {
         $location = GeographicLocation::where('patient_id', $patientId)->first();
 
-        if (!$location) {
-            return response()->json(['message' => 'No se encontró ubicación geográfica para este paciente.'], 404);
+        return response()->json([
+            'message' => $location ? 'Ubicación geográfica encontrada.' : 'No se encontró ubicación geográfica para este paciente.',
+            'data' => $location,
+        ]);
+    }
+
+    public function getByPatientIds(Request $request): JsonResponse
+    {
+        $patientIds = $request->input('patient_ids', []);
+        $locations = [];
+
+        if (!empty($patientIds) && is_array($patientIds)) {
+            $locations = GeographicLocation::whereIn('patient_id', $patientIds)->get()->toArray();
         }
 
         return response()->json([
-            'message' => 'Ubicación geográfica encontrada.',
-            'data' => $location,
+            'message' => count($locations) > 0 ? 'Ubicaciones geográficas encontradas.' : 'No se encontraron ubicaciones geográficas.',
+            'data' => $locations,
         ]);
     }
 }
